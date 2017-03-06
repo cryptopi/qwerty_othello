@@ -18,6 +18,7 @@ Player::Player(Side side) {
 
 /*
  * Destructor for the player.
+ * Frees up any resources allocated to it during use
  */
 Player::~Player() {
 }
