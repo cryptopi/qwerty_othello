@@ -6,7 +6,7 @@
  * within 30 seconds.
  */
 Player::Player(Side side) {
-    // Will be set to true in test_minimax.cpp.
+    // Will be set to true in test_minimax.cpp. can be set to false for compeition
     testingMinimax = false;
 
     /*
