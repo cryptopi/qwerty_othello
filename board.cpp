@@ -162,6 +162,90 @@ int Board::countWhite() {
     return taken.count() - black.count();
 }
 
+int Board::getScore(Side side, bool testingMinimax) {
+    int totalScore = 0;
+    //simple scoring function for testing
+    if (testingMinimax) {
+        if (side == BLACK) {
+            totalScore = this->countBlack() - this->countWhite();
+        } else {
+            totalScore = this->countWhite() - this->countBlack();
+        }
+    } else {
+        //weights for pieces in corresponding squares
+        const int CORNER_WEIGHT = 3;
+        const int EDGE_WEIGHT = 2;
+        const int NEXT_TO_CORNER_WEIGHT = -2;
+        const int DIAGONAL_TO_CORNER_WEIGHT = -3;
+        const int OTHER_WEIGHT = 1;
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                //score occupied squares only
+                if (this->occupied(i, j)) {
+                    Position pos = Board::getSquarePosition(i, j);
+                    int additionalScore = 0;
+                    if (pos == CORNER) {
+                        additionalScore = CORNER_WEIGHT;
+                    } else if (pos == DIAGONAL_TO_CORNER) {
+                        additionalScore = DIAGONAL_TO_CORNER_WEIGHT;
+                    } else if (pos == NEXT_TO_CORNER) {
+                        additionalScore = NEXT_TO_CORNER_WEIGHT;
+                    } else if (pos == EDGE) {
+                        additionalScore = EDGE_WEIGHT;
+                    } else if (pos == OTHER) {
+                        additionalScore = OTHER_WEIGHT;
+                    }
+                    //if piece is of opposite color, has opposite score
+                    if (!this->get(side, i, j)) {
+                        additionalScore = -additionalScore;
+                    }
+                    totalScore += additionalScore;
+                }
+            }
+        }
+    }
+    
+    return totalScore;
+}
+
+Position Board::getSquarePosition(int x, int y) {
+    Position pos;
+    bool isEdge = (x == 0) || (x == BOARD_SIZE - 1) || (y == 0) || (y == BOARD_SIZE - 1);
+    bool isCorner = 
+            (x == 0 && y == 0) || 
+            (x == 0 && y == BOARD_SIZE - 1) || 
+            (x == BOARD_SIZE - 1 && y == 0) || 
+            (x == BOARD_SIZE - 1 && y == BOARD_SIZE - 1);
+    bool isDiagonalToCorner = 
+            (x == 1 && y == 1) || 
+            (x == 1 && y == BOARD_SIZE - 2) || 
+            (x == BOARD_SIZE - 2 && y == 1) || 
+            (x == BOARD_SIZE - 2 && y == BOARD_SIZE - 2);
+    bool isNextToCorner = 
+            (x == 1 && y == 0) ||
+            (x == 0 && y == 1) ||
+            (x == 0 && y == BOARD_SIZE - 2) ||
+            (x == 1 && y == BOARD_SIZE - 1) ||
+            (x == BOARD_SIZE - 2 && y == BOARD_SIZE - 1) ||
+            (x == BOARD_SIZE - 1 && y == BOARD_SIZE - 2) ||
+            (x == BOARD_SIZE - 2 && y == 0) ||
+            (x == BOARD_SIZE - 1 && y == 1);
+    if (isCorner) {
+        pos = CORNER;
+    } else if (isDiagonalToCorner) {
+        pos = DIAGONAL_TO_CORNER;
+    } else if (isNextToCorner) {
+        pos = NEXT_TO_CORNER;
+    } else if (isEdge) {
+        pos = EDGE;
+    } else {
+        pos = OTHER;
+    }
+    
+    return pos;
+}
+
+
 /*
  * Sets the board state given an 8x8 char array where 'w' indicates a white
  * piece and 'b' indicates a black piece. Mainly for testing purposes.

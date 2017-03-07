@@ -28,6 +28,8 @@ public:
     int count(Side side);
     int countBlack();
     int countWhite();
+    int getScore(Side side, bool testingMinimax);
+    static Position getSquarePosition(int x, int y);
 
     void setBoard(char data[]);
 };
