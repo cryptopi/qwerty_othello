@@ -162,6 +162,14 @@ int Board::countWhite() {
     return taken.count() - black.count();
 }
 
+/**
+ * @brief gets the heuristic score of this board
+ *
+ * @param side the side to compute the score for
+ * @param testingMinimax true if we are testing minimax, false otherwise
+ *
+ * @return the score of this board for the provided side
+ */
 int Board::getScore(Side side, bool testingMinimax) {
     int totalScore = 0;
     //simple scoring function for testing
@@ -182,6 +190,7 @@ int Board::getScore(Side side, bool testingMinimax) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 //score occupied squares only
                 if (this->occupied(i, j)) {
+                    //different positions are weighted differently
                     Position pos = Board::getSquarePosition(i, j);
                     int additionalScore = 0;
                     if (pos == CORNER) {
@@ -208,6 +217,14 @@ int Board::getScore(Side side, bool testingMinimax) {
     return totalScore;
 }
 
+/**
+ * @brief determines the position of the square at the provided coordinates
+ *
+ * @param x the x coordinate of the square to test
+ * @param y the y coordinate of the square to test
+ *
+ * @return the position of the square at the provided coordinates
+ */
 Position Board::getSquarePosition(int x, int y) {
     Position pos;
     bool isEdge = (x == 0) || (x == BOARD_SIZE - 1) || (y == 0) || (y == BOARD_SIZE - 1);

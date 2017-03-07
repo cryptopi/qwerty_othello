@@ -50,6 +50,17 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     return nextMove;
 }
 
+/**
+ * @brief Performs a minimax on the provided board to determine the best next move
+ *
+ * @param board the board to run the minimax on
+ * @param depth the depth to perform the minimax to
+ * @param maximizingPlayer true if we are trying to maximize the score of the player on the current
+ *                              level of the tree, false if we are trying to minimize it
+ *
+ * @return a pair - the first element is the highest minimum score that will occur and the second
+ *                  element is the move that caused such a score
+ */
 std::pair<int, Move*> Player::minimax(Board *board, int depth, bool maximizingPlayer) {
     //determine the color of the person playing in the tree
     Side playingSide;
@@ -73,6 +84,8 @@ std::pair<int, Move*> Player::minimax(Board *board, int depth, bool maximizingPl
             for (int j = 0; j < BOARD_SIZE; j++) {
                 Move *testMove = new Move(i, j);
                 //only check valid moves
+                //this effectively finds "child nodes" (boards) of the provided
+                //board - it is all boards that could result with valid moves
                 if (this->board->checkMove(testMove, playingSide)) {
                     Board *childBoard = this->board->copy();
                     childBoard->doMove(testMove, playingSide);
@@ -103,6 +116,8 @@ std::pair<int, Move*> Player::minimax(Board *board, int depth, bool maximizingPl
             for (int j = 0; j < BOARD_SIZE; j++) {
                 Move *testMove = new Move(i, j);
                 //only check valid moves
+                //this effectively finds "child nodes" (boards) of the provided
+                //board - it is all boards that could result with valid moves
                 if (this->board->checkMove(testMove, playingSide)) {
                     Board *childBoard = this->board->copy();
                     childBoard->doMove(testMove, playingSide);
