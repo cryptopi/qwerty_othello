@@ -19,6 +19,7 @@ public:
     bool testingMinimax;
     void setBoard(Board *aBoard) { this->board = aBoard; }
     std::pair<int, Move*> minimax(Board *board, int depth, bool maximizingPlayer);
+    std::pair<int, Move*> negamax(Board *board, Side playingSide, int depth, int alpha, int beta);
 private:
     Board *board;
     Side side;

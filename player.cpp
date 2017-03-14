@@ -1,4 +1,5 @@
 #include "player.hpp"
+#include <limits.h>
 
 /*
  * Constructor for the player; initialize everything here. The side your AI is
@@ -39,7 +40,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         this->board->doMove(opponentsMove, this->side == BLACK ? WHITE : BLACK);
     }
     
-    std::pair<int, Move*> results = this->minimax(this->board, 2, true);
+    //need minimum plus one because -INT_MIN overflows and becomes negative again
+    std::pair<int, Move*> results = this->negamax(this->board, this->side, 7, INT_MIN + 1, INT_MAX);
     
     Move *nextMove = results.second;
     
@@ -48,6 +50,57 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
     
     return nextMove;
+}
+
+/**
+ * @brief Performs a negamax with alpha-beta pruning on the provided board to
+ *          determine the best next move
+ *
+ * @param board the board to run the minimax on
+ * @param side the player that is playing
+ * @param depth the depth to perform the negamax to
+ * @param alpha the value of the alpha parameter (initial value is ~INT_MIN)
+ * @param beta the value of the beta parameter (initial value is ~INT_MAX)
+ *
+ * @return a pair - the first element is the highest minimum score that will occur and the second
+ *                  element is the move that caused such a score
+ */
+std::pair<int, Move*> Player::negamax(Board *board, Side playingSide, int depth, int alpha, int beta)
+{
+    if (depth == 0 || !board->hasMoves(playingSide)) {
+        return std::pair<int, Move*>(board->getScore(this->side, true), nullptr);
+    }
+    
+    Side oppositeSide = playingSide == WHITE ? BLACK : WHITE;
+    
+    //find move that results in highest score
+    Move *moveMade = nullptr;
+    // int bestValue = INT_MIN;
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            Move *testMove = new Move(i, j);
+            //only check valid moves
+            //this effectively finds "child nodes" (boards) of the provided
+            //board - it is all boards that could result with valid moves
+            if (this->board->checkMove(testMove, playingSide)) {
+                Board *childBoard = this->board->copy();
+                childBoard->doMove(testMove, playingSide);
+                std::pair<int, Move*> childResults = this->negamax(childBoard, oppositeSide, depth - 1, -beta, -alpha);
+                int boardScore = -childResults.first;
+                if (boardScore > alpha) {
+                    alpha = boardScore;
+                    moveMade = new Move(i, j);
+                }
+                if (boardScore > beta) {
+                    return std::pair<int, Move*>(beta, new Move(i, j));
+                }
+                delete childBoard;
+            }
+            delete testMove;
+        }
+    }
+    return std::pair<int, Move*>(alpha, moveMade);
+
 }
 
 /**
@@ -61,87 +114,87 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
  * @return a pair - the first element is the highest minimum score that will occur and the second
  *                  element is the move that caused such a score
  */
-std::pair<int, Move*> Player::minimax(Board *board, int depth, bool maximizingPlayer) {
-    //determine the color of the person playing in the tree
-    Side playingSide;
-    if (maximizingPlayer) {
-        playingSide = this->side;
-    } else {
-        playingSide = this->side == BLACK ? WHITE : BLACK;
-    }
-    
-    //recursive base case
-    if (depth == 0 || !board->hasMoves(playingSide)) {
-        return std::pair<int, Move*>(board->getScore(this->side, this->testingMinimax), nullptr);
-    }
-
-    
-    if (maximizingPlayer) {
-        //find move that results in highest score
-        Move *moveMade = nullptr;
-        int bestValue = 0;
-        for (int i = 0; i < BOARD_SIZE; i++) {
-            for (int j = 0; j < BOARD_SIZE; j++) {
-                Move *testMove = new Move(i, j);
-                //only check valid moves
-                //this effectively finds "child nodes" (boards) of the provided
-                //board - it is all boards that could result with valid moves
-                if (this->board->checkMove(testMove, playingSide)) {
-                    Board *childBoard = this->board->copy();
-                    childBoard->doMove(testMove, playingSide);
-                    std::pair<int, Move*> childResults = this->minimax(childBoard, depth - 1, false);
-                    int boardScore = childResults.first;
-                    //first move being checked
-                    if (moveMade == nullptr) {
-                        moveMade = new Move(i, j);
-                        bestValue = boardScore;
-                    }
-                    else {
-                        if (boardScore > bestValue) {
-                            moveMade = new Move(i, j);
-                            bestValue = boardScore;
-                        }
-                    }
-                    delete childBoard;
-                }
-                delete testMove;
-            }
-        }
-        return std::pair<int, Move*>(bestValue, moveMade);
-    } else {
-        //find move that results in lowest score because enemy is playing
-        Move *moveMade = nullptr;
-        int lowestValue = 0;
-        for (int i = 0; i < BOARD_SIZE; i++) {
-            for (int j = 0; j < BOARD_SIZE; j++) {
-                Move *testMove = new Move(i, j);
-                //only check valid moves
-                //this effectively finds "child nodes" (boards) of the provided
-                //board - it is all boards that could result with valid moves
-                if (this->board->checkMove(testMove, playingSide)) {
-                    Board *childBoard = this->board->copy();
-                    childBoard->doMove(testMove, playingSide);
-                    std::pair<int, Move*> childResults = this->minimax(childBoard, depth - 1, true);
-                    int boardScore = childResults.first;
-                    //first move being checked
-                    if (moveMade == nullptr) {
-                        moveMade = new Move(i, j);
-                        lowestValue = boardScore;
-                    }
-                    else {
-                        if (boardScore < lowestValue) {
-                            moveMade = new Move(i, j);
-                            lowestValue = boardScore;
-                        }
-                    }
-                    delete childBoard;
-                }
-                delete testMove;
-            }
-        }
-        return std::pair<int, Move*>(lowestValue, moveMade);
-    }
-}
+// std::pair<int, Move*> Player::minimax(Board *board, int depth, bool maximizingPlayer) {
+//     //determine the color of the person playing in the tree
+//     Side playingSide;
+//     if (maximizingPlayer) {
+//         playingSide = this->side;
+//     } else {
+//         playingSide = this->side == BLACK ? WHITE : BLACK;
+//     }
+//     
+//     //recursive base case
+//     if (depth == 0 || !board->hasMoves(playingSide)) {
+//         return std::pair<int, Move*>(board->getScore(this->side, this->testingMinimax), nullptr);
+//     }
+// 
+//     
+//     if (maximizingPlayer) {
+//         //find move that results in highest score
+//         Move *moveMade = nullptr;
+//         int bestValue = 0;
+//         for (int i = 0; i < BOARD_SIZE; i++) {
+//             for (int j = 0; j < BOARD_SIZE; j++) {
+//                 Move *testMove = new Move(i, j);
+//                 //only check valid moves
+//                 //this effectively finds "child nodes" (boards) of the provided
+//                 //board - it is all boards that could result with valid moves
+//                 if (this->board->checkMove(testMove, playingSide)) {
+//                     Board *childBoard = this->board->copy();
+//                     childBoard->doMove(testMove, playingSide);
+//                     std::pair<int, Move*> childResults = this->minimax(childBoard, depth - 1, false);
+//                     int boardScore = childResults.first;
+//                     //first move being checked
+//                     if (moveMade == nullptr) {
+//                         moveMade = new Move(i, j);
+//                         bestValue = boardScore;
+//                     }
+//                     else {
+//                         if (boardScore > bestValue) {
+//                             moveMade = new Move(i, j);
+//                             bestValue = boardScore;
+//                         }
+//                     }
+//                     delete childBoard;
+//                 }
+//                 delete testMove;
+//             }
+//         }
+//         return std::pair<int, Move*>(bestValue, moveMade);
+//     } else {
+//         //find move that results in lowest score because enemy is playing
+//         Move *moveMade = nullptr;
+//         int lowestValue = 0;
+//         for (int i = 0; i < BOARD_SIZE; i++) {
+//             for (int j = 0; j < BOARD_SIZE; j++) {
+//                 Move *testMove = new Move(i, j);
+//                 //only check valid moves
+//                 //this effectively finds "child nodes" (boards) of the provided
+//                 //board - it is all boards that could result with valid moves
+//                 if (this->board->checkMove(testMove, playingSide)) {
+//                     Board *childBoard = this->board->copy();
+//                     childBoard->doMove(testMove, playingSide);
+//                     std::pair<int, Move*> childResults = this->minimax(childBoard, depth - 1, true);
+//                     int boardScore = childResults.first;
+//                     //first move being checked
+//                     if (moveMade == nullptr) {
+//                         moveMade = new Move(i, j);
+//                         lowestValue = boardScore;
+//                     }
+//                     else {
+//                         if (boardScore < lowestValue) {
+//                             moveMade = new Move(i, j);
+//                             lowestValue = boardScore;
+//                         }
+//                     }
+//                     delete childBoard;
+//                 }
+//                 delete testMove;
+//             }
+//         }
+//         return std::pair<int, Move*>(lowestValue, moveMade);
+//     }
+// }
 
 //random method
 // Move *Player::doMove(Move *opponentsMove, int msLeft) {
