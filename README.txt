@@ -1,0 +1,3 @@
+1) Tim and I both read about the various algorithms employed in writing an AI to play Othello. We used my computer to write the actual code in a pair programming environment. We alternated who was typing the code - the person not typing looked at the code and asked questions as inconsistencies arose. We also issued a brief code review before each assignment submission in an effort to ensure no details were overlooked.
+
+2) We added alpha-beta pruning to the AI to prune off branches that would not yield useful results - this made it so we could check a higher number of branches in a given amount of time. We tried to use transposition tables but encountered difficulty and so decided to not pursue to them in the time allotted for the assignment.
